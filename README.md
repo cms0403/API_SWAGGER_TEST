@@ -40,7 +40,7 @@ npm install express jsonwebtoken swagger-ui-express swagger-jsdoc
 swagger 를 이용하여 API에 대한 테스트 및 가이드 페이지를 추가하였습니다.
 /api-docs 경로를 통해 확인 가능합니다.
 
-swagger 내에서 API 테스트를 진행하기 위해서 통신 할때 토큰검증하는 authmiddleware.js 부분을 주석처리 하였습니다. (2023-08-01 ~ )
+swagger 내에서 API 테스트를 진행하기 위해서 통신 할때 토큰검증하는 authmiddleware.js 부분을 주석처리 하였습니다. (2023-08-10 ~ )
 
 # SWAGGER 옵션
 - Paths: API의 엔드포인트와 해당 엔드포인트에 대한 작업(GET, POST, PUT 등)을 정의합니다.
