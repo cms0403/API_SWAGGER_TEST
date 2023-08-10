@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background-color: #777;
+            margin: 20px 0;
+        }
+        small {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 5px;
+            display: block;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            height: 30px;
+            margin-bottom: 10px;
+            padding: 5px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 588px;
+        }
+        input[type="button"] {
+            height: 30px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: auto;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+        }
+        input[type="button"]:hover {
+            background-color: #f5f5f5;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <small>학생 명단 확인</small>
+            <div>
+                <input type="button" id="allList" value="명단 확인">
+            </div>
+        </div>
+        <hr>
+        <div>
+            <small>/user</small>
+            <div>
+                <input type="text" id="testId" placeholder="학번">
+                <input type="button" id="testBtn" value="확인">
+            </div>
+        </div>
+        <hr>
+        <div>
+            <small>생년월일 업데이트</small>
+            <div>
+                <input type="text" id="userCode" placeholder="학번">
+                <br>
+                <input type="text" id="userBirth" placeholder="생년월일">
+                <input type="button" id="nmbirthBtn" value="업데이트">
+            </div>
+        </div>
+        <hr>
+        <div>
+            <small>학생 추가</small>
+            <div>
+                <input type="text" id="insertName" placeholder="이름">
+                <br>
+                <input type="text" id="insertAge" placeholder="나이">
+                <br>
+                <input type="radio" name="gender" value="M"><small style="display:inline-block;margin-right:30px;">남</small>
+                <input type="radio" name="gender" value="F"><small style="display:inline-block;">여</small>
+                <br>
+                <input type="button" id="insertBtn" value="추가">
+            </div>
+        </div>
+        <hr>
+        <div>
+            <small>학생 삭제</small>
+            <div>
+                <input type="text" id="delCode" placeholder="학번">
+                <br>
+                <input type="text" id="delName" placeholder="이름">
+                <input type="button" id="delBtn" value="삭제">
+            </div>
+        </div>
+        <hr>
+        <div>
+            <small>토큰 발행 (1분) <span id="countDownId" style="color:crimson"></span></small>
+            <div>
+                <input type="button" id="tokenBtn" value="토큰 발행" alt="X">
+                <input type="button" id="tokenCheck" value="토큰 확인">
+                <input type="button" id="loginBtn" value="로그인">
+            </div>
+        </div>
+        <div class="message" id="message"></div>
+    </div>
+</body>
+</html>
+<script>
+    const testId = document.querySelector("#testId");
+    const testBtn = document.querySelector("#testBtn");
+    const nmbirthBtn = document.querySelector("#nmbirthBtn");
+    const birthForm = document.querySelector("#birthForm");
+    const deleteForm = document.querySelector("#deleteForm");
+    const allList = document.querySelector('#allList');
+    const insertBtn = document.querySelector('#insertBtn');
+    const delBtn = document.querySelector('#delBtn');
+    const loginBtn = document.querySelector('#loginBtn');
+    let countdown;
+    let openLoginPage;
+
+    function getCookie(name) {
+        const matches = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+        return matches ? decodeURIComponent(matches[1]) : undefined;
+    }
+
+    //전체명단 확인(GET)
+    allList.onclick = () => {
+        const token = getCookie('Access-Token');
+        fetch("/user", {
+            method: "GET",
+            headers: {
+                Accept: "application/json",
+                "token":token
+            }
+        }).then(res => res.json()).then(data => {
+            if(!data.success && data.success != undefined){ //토큰인증에 실패했을때
+                alert(data.errormessage);
+                return;
+            }
+            let allText = "";
+            allText = `${allText}<table>`
+            allText = `${allText}<tr><th>학번</th><th>이름</th></tr>`
+            for(i=0; i<data.length; i++) { //전체 명단 반복
+                allText = `${allText}<tr><td>${data[i].UM_USER_CODE}</td><td>${data[i].UM_USER_NM}</td></tr>`
+            }
+            allText = `${allText}</table>`
+            document.querySelector("#message").innerHTML = allText;
+        });
+
+        // $.ajax({
+        //     type: 'GET',
+        //     url: "/user",
+        //     headers: {
+        //         "token":token
+        //     },
+        //     success: function (response) {
+        //         console.log(response);
+        //         let allText = "";
+        //         allText = allText + "<table>"
+        //         allText = allText + "<tr><th>학번</th><th>이름</th></tr>"    
+        //         for(i=0; i<response.length; i++) { //전체 명단 반복
+        //             allText = allText + "<tr><td>" + response[i].UM_USER_CODE + "</td><td>" + response[i].UM_USER_NM + "</td></th>"
+        //         }
+        //         allText = allText + "</table>"
+        //         document.querySelector("#message").innerHTML = allText;
+        //     },
+        //     error: function (xhr, textStatus, error) {
+        //         if(xhr.responseJSON != undefined) { //토큰인증 실패 메세지
+        //             alert(xhr.responseJSON.errormessage);
+        //         }
+        //     }
+        // });
+    }
+    
+    //학번으로 데이터 확인(GET)
+    testBtn.onclick = () => {
+        const token = getCookie('Access-Token');
+        if(testId.value != "") {
+            fetch(`/user/${testId.value}`, {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    "token":token
+                }
+            }).then(res => res.json()).then(data => {
+                const jsonData = JSON.stringify(data, null, 2); // JSON 데이터를 정렬하여 문자열로 변환
+                document.querySelector("#message").innerText = jsonData;
+            }).catch(err=> {
+                alert("해당 학번의 학생이 없습니다.");
+            })
+            // $.ajax({
+            //   	type: 'GET',
+            //     url: "/user/" + testId.value,
+            //     headers: {
+            //         "token":token
+            //     },
+            //     success: function (response) {
+            //         const jsonData = JSON.stringify(response, null, 2); // JSON 데이터를 정렬하여 문자열로 변환
+            //         //alert(jsonData); // alert 창에 JSON 데이터 표시
+            //         document.querySelector("#message").innerText = jsonData;
+            //     },
+            //     error: function (xhr, textStatus, error) {
+            //         if(xhr.responseJSON != undefined) { //토큰인증 실패 메세지
+            //             alert(xhr.responseJSON.errormessage);
+            //         } else if(textStatus == "parsererror") {
+            //             alert("해당 유저가 없습니다.");
+            //         } else if(textStatus == "error") {
+            //             alert("숫자만 입력해주세요");
+            //         } else {
+            //             alert("?");
+            //         }
+            //     }
+            // });
+        } else {
+            alert("숫자를 입력하세요.")
+        }
+    };
+
+    //데이터 일부분 업데이트 (PATCH)
+    nmbirthBtn.onclick = () => {
+        const userCode = $("#userCode").val();
+        const userBirth = $("#userBirth").val();
+        if(userCode != "" && userBirth != "") {
+            const token = getCookie('Access-Token');
+            fetch(`/user/code/${userCode}/birth/${userBirth}`, {
+                method: "PATCH",
+                headers: {
+                    Accept: "application/json",
+                    "token":token
+                }
+            }).then(res => {return res.json()}).then((data, res) => {
+                console.log(data);
+                console.log(res);
+                if(data.rowsAffected == 1){
+                    alert(`${userCode}학번 생년월일 업데이트 완료`)
+                } else {
+                    if(!data.success && data.success != undefined){ //토큰인증에 실패했을때
+                        alert(data.errormessage);
+                        return;
+                    } else {
+                        alert("에러발생 업데이트 미완료");
+                    }
+                }
+            })
+        } else {
+            alert("학번과 생년월일을 작성해주세요");
+        }
+    };
+
+    //데이터 추가(POST)
+    insertBtn.onclick = () => {
+        const insertName = $("#insertName").val();
+        const insertAge = $("#insertAge").val();
+        const insertGender = $("input[name='gender']:checked").val();
+        
+        if(insertName != "" && insertAge != "" && insertGender != "") {
+            const token = getCookie('Access-Token');
+            fetch(`/user/name/${insertName}/age/${insertAge}/gender/${insertGender}`, {
+                method:"POST",
+                headers: {
+                    Accept:"application/json",
+                    "token":token
+                }
+            }).then(res => {return res.json()}).then((data, res) => {
+                if(data.rowsAffected == 1){
+                    alert(`${insertName} 추가 완료`)
+                } else {
+                    if(!data.success && data.success != undefined){ //토큰인증에 실패했을때
+                        alert(data.errormessage);
+                        return;
+                    } else {
+                        alert("에러발생 데이터 추가 미완료");
+                    }
+                }
+            })
+        } else {
+            alert("추가에 필요한 데이터를 모두 입력해주세요.");
+        }
+    };
+    
+    //데이터 삭제(delete)
+    delBtn.onclick = () => {
+        const delCode = $("#delCode").val();
+        const delName = $("#delName").val();
+        if(delCode != "" && delName != "") {
+            const token = getCookie('Access-Token');
+            fetch(`/user/code/${delCode}/name/${delName}`, {
+                method:"DELETE",
+                headers:{
+                    Accept: "application/json",
+                    "token":token
+                }
+            }).then(res => {return res.json()}).then((data, res) => {
+                if(data.rowsAffected == 1){
+                    alert(`${delName} 삭제 완료`)
+                } else {
+                    if(!data.success && data.success != undefined){ //토큰인증에 실패했을때
+                        alert(data.errormessage);
+                        return;
+                    } else {
+                        alert("에러발생 데이터 삭제 미완료");
+                    }
+                }
+            })
+        } else {
+            alert("학번과 이름을 작성해주세요");
+        }
+    };
+
+    function startCountdown() {
+        const countdownArea = document.querySelector("#countDownId");
+        countdownArea.innerHTML = "";
+        let seconds = 60;
+        if (countdown) {
+            clearInterval(countdown);
+            countdown = null;
+        }
+
+        countdown = setInterval(() => {
+            seconds--;
+            //$("#countDownId").html(seconds);
+            countdownArea.innerHTML = seconds;
+
+            if(seconds <= 0) {
+                clearInterval(countdown);
+                countdownArea.innerHTML = "토큰 만료";
+            }
+        }, 1000);
+    }
+
+    //토큰 발행 버튼
+    document.querySelector("#tokenBtn").onclick = () => {
+        if(document.querySelector("#tokenBtn").alt == "Y") {
+            loginSuccess();
+            return;
+        }else{
+            alert("로그인을 먼저 진행해주세요.");
+            return;
+        }
+        //로그인 먼저 진행으로 해당 코드 사용하지 않음.
+        // fetch(`/token`, {
+        //     method:"POST"
+        // }).then(res => res.json()).then(data => {
+        //     const token = data.token;
+        //     document.cookie = `Access-Token=${token};path=/`;
+        //     alert(data.message)
+        //     startCountdown();
+        // }).catch(err => {
+        //     console.log(err);
+        //     alert("에러발생")
+        // })
+    }
+
+    //토큰 확인 버튼
+    document.querySelector("#tokenCheck").onclick = () => {
+        const token = getCookie('Access-Token');
+        fetch(`/tokencheck`, {
+            method:"GET",
+            headers:{"token":token}
+        }).then(res => res.json()).then(data => {
+            alert(`${data.message} (${data.payload.type})`)
+        }).catch(err => {
+            const errMsg = err.toString().split('"')[1];
+            if(errMsg == "jwt malformed") {
+                alert("토큰이 존재하지 않습니다.\n토큰을 발급받으세요.");
+            }else if(errMsg == "jwt expired"){
+                alert("토큰이 만료되었습니다.\n토큰을 발급받으세요.");
+            }else{
+                alert(`정상토큰이 아닙니다.\n(${errMsg})`);
+            }
+        })
+    }
+        // $.ajax({
+        //     type: 'GET',
+        //     url: `/tokencheck`,
+        //     headers: {"token":token},
+        //     success: function (response) {
+        //         alert("정상적인 토큰!");
+        //     },
+        //     error: function (xhr, textStatus, error) {
+        //         alert("만료된 토큰!");
+        //     }
+        // });
+    
+    loginBtn.onclick = () => {
+        window.open('login','loginPage', 'width=500, height=300, top=100, left=200, location=no')
+    }
+
+    window.loginSuccess = () => {
+        fetch(`/token`, {
+            method:"POST"
+        }).then(res => res.json()).then(data => {
+            console.log(data)
+            const token = data.token;
+            document.cookie = `Access-Token=${token};path=/`;
+            alert(data.message)
+            startCountdown();
+        }).catch(err => {
+            console.log(err);
+            alert("에러발생")
+        })
+    }
+</script>
